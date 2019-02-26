@@ -6,6 +6,6 @@
 int main() {
     std::cout << "Initiating UndetectableExtensionCharm. \n Please stand by... \n" << std::endl;
     
-    ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+
     return 0;
 }
