@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <thread>
+#include "main.h"
 
 //TODO: Update path vars or add the libs to this directory
 //TODO: Have fun debugging the background thread....
@@ -21,49 +22,37 @@ int main() {
 
 void backgroundThreadMain()
 {
-    int key_count = 4;
-
-    INPUT* input = new INPUT[key_count];
-    for( int i = 0; i < key_count; i++ )
+    if(RegisterHotKey(NULL, 1, MOD_SHIFT, 0x42))//rmsbtn 0x02/VK_RBUTTON
     {
-        input[i].ki.dwFlags = 0;
-        input[i].type = INPUT_KEYBOARD;
+        //Retrieve the applications instance
+        HINSTANCE instance = GetModuleHandle(NULL);
+        //Set a global Windows Hook to capture keystrokes using the function declared above
+        HHOOK test1 = SetWindowsHookEx( WH_KEYBOARD_LL, LowLevelKeyboardProc, instance,0);
     }
 
+}
 
-    input[0].ki.wVk = VK_CONTROL;
-    input[0].ki.wScan = MapVirtualKey( VK_CONTROL, MAPVK_VK_TO_VSC );
-    input[1].ki.wVk = 0x56;// Virtual key code for 'v'
-    input[1].ki.wScan = MapVirtualKey( 0x56, MAPVK_VK_TO_VSC );
-    input[2].ki.dwFlags = KEYEVENTF_KEYUP;
-    input[2].ki.wVk = input[0].ki.wVk;
-    input[2].ki.wScan = input[0].ki.wScan;
-    input[3].ki.dwFlags = KEYEVENTF_KEYUP;
-    input[3].ki.wVk = input[1].ki.wVk;
-    input[3].ki.wScan = input[1].ki.wScan;
-
-    if( !SendInput( key_count, (LPINPUT)input, sizeof(INPUT) ) )
+LRESULT CALLBACK LowLevelKeyboardProc( int nCode, WPARAM wParam, LPARAM lParam )
+{
+    char pressedKey;
+    // Declare a pointer to the KBDLLHOOKSTRUCTdsad
+    KBDLLHOOKSTRUCT *pKeyBoard = (KBDLLHOOKSTRUCT *)lParam;
+    switch( wParam )
     {
-        // You can get more information on why this function failed by calling
-        //        // the win32 function, GetLastError().
+        case WM_KEYUP: // When the key has been pressed and released
+        {
+            //get the key code
+            pressedKey = (char)pKeyBoard->vkCode;
+        }
+            break;
+        default:
+            return CallNextHookEx( NULL, nCode, wParam, lParam );
+            break;
     }
 
-    if( OpenClipboard(NULL) )
-    {
-        // Optionally you may want to change CF_TEXT below to CF_UNICODE.
-        // Play around with it, and check out all the standard formats at:
-        // http://msdn.microsoft.com/en-us/library/ms649013(VS.85).aspx
-        HGLOBAL hglb = GetClipboardData( CF_TEXT );
-        LPSTR lpstr = GlobalLock(hglb);
+    //do something with the pressed key here
+    //....
 
-        // Copy lpstr, then do whatever you want with the copy.
-
-        GlobalUnlock(hglb);
-        CloseClipboard();
-    }
-    else
-    {
-        // You know the drill by now. Check GetLastError() to find out what
-        // went wrong. :)
-    }
+    //according to winapi all functions which implement a hook must return by calling next hook
+    return CallNextHookEx( NULL, nCode, wParam, lParam);
 }
